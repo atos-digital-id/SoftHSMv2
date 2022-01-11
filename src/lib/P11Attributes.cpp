@@ -1164,7 +1164,7 @@ bool P11AttrStartDate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrStartDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+CK_RV P11AttrStartDate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -1173,8 +1173,35 @@ CK_RV P11AttrStartDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt if private
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
 	// Store data
-	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	osobject->setAttribute(type, value);
+
+	// Set the CKA_START_DATE during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_START_DATE))
+    {
+        OSAttribute osAttribute(value);
+        osobject->setAttribute(CKA_START_DATE, osAttribute);
+    }
 
 	return CKR_OK;
 }
@@ -1191,7 +1218,7 @@ bool P11AttrEndDate::setDefault()
 }
 
 // Update the value if allowed
-CK_RV P11AttrEndDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int /*op*/)
+CK_RV P11AttrEndDate::updateAttr(Token *token, bool isPrivate, CK_VOID_PTR pValue, CK_ULONG ulValueLen, int op)
 {
 	// Attribute specific checks
 
@@ -1200,8 +1227,35 @@ CK_RV P11AttrEndDate::updateAttr(Token* /*token*/, bool /*isPrivate*/, CK_VOID_P
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
+	ByteString plaintext((unsigned char*)pValue, ulValueLen);
+	ByteString value;
+
+	// Encrypt if private
+
+	if (isPrivate)
+	{
+		if (!token->encrypt(plaintext, value))
+			return CKR_GENERAL_ERROR;
+	}
+	else
+		value = plaintext;
+
+	// Attribute specific checks
+
+	if (value.size() < ulValueLen)
+		return CKR_GENERAL_ERROR;
+
 	// Store data
-	osobject->setAttribute(type, ByteString((unsigned char*)pValue, ulValueLen));
+
+	osobject->setAttribute(type, value);
+
+	// Set the CKA_END_DATE during C_CreateObject
+
+	if (op == OBJECT_OP_CREATE && osobject->attributeExists(CKA_END_DATE))
+    {
+        OSAttribute osAttribute(value);
+        osobject->setAttribute(CKA_END_DATE, osAttribute);
+    }
 
 	return CKR_OK;
 }
